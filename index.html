@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Desempeño SST - Compañía San Fernando</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts - Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js y Plugin de DataLabels para mostrar valores -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .card-transition {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- ENCABEZADO CORPORATIVO -->
+  <header class="bg-[#0F172A] text-white py-4 px-6 md:px-12 shadow-lg border-b-4 border-[#0284C7] sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-4">
+        <div class="bg-white/10 p-2.5 rounded-xl border border-white/10 flex items-center justify-center font-black text-xl text-[#0284C7]">
+          SST
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-extrabold tracking-widest bg-[#0284C7] text-white px-2 py-0.5 rounded uppercase" id="company-tag">COMPAÑÍA SAN FERNANDO</span>
+            <span class="text-xs font-medium text-slate-400">Mantenimiento Pecuario</span>
+          </div>
+          <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">Tablero de Control y Desempeño SST</h1>
+          <p class="text-xs md:text-sm text-slate-300 font-medium">Evaluación de Programas, Matriz de Acciones y Trazabilidad</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Selector Global de Empresa -->
+        <div class="bg-[#1E293B] p-2 rounded-lg border border-slate-700">
+          <label class="block text-slate-400 font-semibold text-[9px] uppercase">Empresa:</label>
+          <select id="select-empresa-filter" onchange="filtrarPorEmpresa(this.value)" class="bg-[#0F172A] text-white text-xs font-bold rounded p-1 border border-slate-600 outline-none cursor-pointer">
+            <option value="TODAS">Todas las Empresas</option>
+            <option value="San Fernando" selected>San Fernando</option>
+            <option value="Chimú Agropecuaria">Chimú Agropecuaria</option>
+          </select>
+        </div>
+
+        <div class="flex flex-wrap md:flex-nowrap gap-3 text-xs bg-[#1E293B] p-3 rounded-lg border border-slate-700">
+          <div>
+            <span class="block text-slate-400 font-semibold text-[10px]">PERIODO ACTUAL:</span>
+            <span class="font-mono text-white font-bold" id="header-periodo">Julio 2026 (Semana 30)</span>
+          </div>
+          <div class="border-l border-slate-700 pl-3">
+            <span class="block text-slate-400 font-semibold text-[10px]">ESTADO GENERAL:</span>
+            <span class="font-mono text-[#DC2626] font-extrabold" id="header-status-tag">41% - CRÍTICO</span>
+          </div>
+          <div class="border-l border-slate-700 pl-3">
+            <span class="block text-slate-400 font-semibold text-[10px]">METAS (PROG/MATR/IND):</span>
+            <span class="font-mono text-[#16A34A] font-bold" id="header-meta">85% / 85% / 100%</span>
+          </div>
+        </div>
+
+        <button onclick="toggleModal(true)" class="bg-[#0284C7] hover:bg-sky-600 text-white p-3 rounded-lg font-bold text-xs flex items-center gap-2 transition shadow-md">
+          <span>⚙️</span>
+          <span class="hidden sm:inline">Editar Datos y Config. Drive</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- COLUMNA IZQUIERDA: SIMULADOR -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+      
+      <div class="bg-white rounded-xl shadow-md border border-slate-200 p-5 card-transition hover:shadow-lg">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 bg-[#E0F2FE] text-[#0284C7] rounded-lg">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            </span>
+            <h2 class="text-lg font-bold text-[#0F172A]">Simulador de Indicadores SST</h2>
+          </div>
+          <span id="drive-sync-indicator" class="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">
+            🔄 Sincronizado
+          </span>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-bold uppercase text-slate-600">1. Programa SST (Peso 30%)</label>
+              <span class="text-xs font-extrabold text-[#16A34A]" id="val-prog">97%</span>
+            </div>
+            <input type="range" min="0" max="100" value="97" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#16A34A]" id="slider-prog" oninput="recalculateMetrics()">
+            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+              <span>Valor Base: <strong id="lbl-base-prog">97%</strong></span>
+              <span>Meta Indep.: <strong class="lbl-meta-prog-val" id="lbl-meta-prog">85%</strong></span>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-bold uppercase text-slate-600">2. Matriz de Acciones (Peso 20%)</label>
+              <span class="text-xs font-extrabold text-[#D97706]" id="val-matriz">51%</span>
+            </div>
+            <input type="range" min="0" max="100" value="51" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#D97706]" id="slider-matriz" oninput="recalculateMetrics()">
+            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+              <span>Valor Base: <strong id="lbl-base-matriz">51%</strong></span>
+              <span>Meta Indep.: <strong class="lbl-meta-matriz-val" id="lbl-meta-matriz">85%</strong></span>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-bold uppercase text-slate-600">3. Índice de Accidentabilidad (Peso 50%)</label>
+              <span class="text-xs font-extrabold text-[#DC2626]" id="val-seg">3%</span>
+            </div>
+            <input type="range" min="0" max="100" value="3" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#DC2626]" id="slider-seg" oninput="recalculateMetrics()">
+            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+              <span>Valor Base: <strong id="lbl-base-seg">3%</strong></span>
+              <span>Meta Indep.: <strong class="lbl-meta-seg-val" id="lbl-meta-seg">100%</strong></span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+            <button onclick="resetSimulatedData()" class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 py-2 px-3 rounded-lg card-transition flex items-center justify-center gap-1">
+              ↺ Restaurar
+            </button>
+            <button onclick="guardarValoresSimulador()" class="text-xs font-bold text-white bg-[#0284C7] hover:bg-sky-700 py-2 px-3 rounded-lg card-transition shadow-sm flex items-center justify-center gap-1">
+              💾 Guardar en Drive
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white rounded-xl shadow-md p-5 flex flex-col gap-4">
+        <h3 class="text-sm font-bold tracking-wide uppercase border-b border-slate-700 pb-2">🚨 Diagnóstico de mantenimiento</h3>
+        
+        <div class="space-y-3 text-xs">
+          <div class="flex items-start gap-3 bg-white/5 p-3 rounded-lg border border-white/10">
+            <span class="text-xl">🛑</span>
+            <div>
+              <span class="block font-bold text-[#DC2626] uppercase text-[11px]">Causa Raíz Principal</span>
+              <p class="text-[11px] text-slate-300 mt-1 leading-relaxed" id="diag-causa">
+                Indice de accidentabilidad crítico en relación con las actividades técnicas de mantenimiento, falta de control y supervisión por parte del supervisor de mantenimiento asi como la aplicación de las buenas practicas de SST.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 bg-white/5 p-3 rounded-lg border border-white/10">
+            <span class="text-xl">⚠️</span>
+            <div>
+              <span class="block font-bold text-[#D97706] uppercase text-[11px]">Foco Físico / Observaciones</span>
+              <p class="text-[11px] text-slate-300 mt-1 leading-relaxed" id="diag-foco">
+                Existen 11 acciones correctivas pendientes de levantar, concentradas mayoritariamente en los planteles del GP C14 y GP C15.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- COLUMNA DERECHA: PESTAÑAS -->
+    <section class="lg:col-span-7 flex flex-col gap-6">
+      
+      <div class="bg-white rounded-xl shadow-md border border-slate-200 p-2 flex gap-1 overflow-x-auto">
+        <button id="tab-dashboard" onclick="switchTab('dashboard')" class="flex-1 min-w-[120px] py-2 px-3 text-xs font-bold rounded-lg bg-[#0F172A] text-white card-transition text-center">
+          📊 Desempeño
+        </button>
+        <button id="tab-responsable" onclick="switchTab('responsable')" class="flex-1 min-w-[120px] py-2 px-3 text-xs font-semibold text-slate-600 rounded-lg hover:bg-slate-50 card-transition text-center">
+          👤 Avance por Responsable
+        </button>
+        <button id="tab-trazabilidad" onclick="switchTab('trazabilidad')" class="flex-1 min-w-[120px] py-2 px-3 text-xs font-semibold text-slate-600 rounded-lg hover:bg-slate-50 card-transition text-center">
+          📈 Trazabilidad
+        </button>
+        <button id="tab-plan" onclick="switchTab('plan')" class="flex-1 min-w-[120px] py-2 px-3 text-xs font-semibold text-slate-600 rounded-lg hover:bg-slate-50 card-transition text-center">
+          🎯 Plan de Acción
+        </button>
+      </div>
+
+      <!-- VISTA 1: DASHBOARD GENERAL -->
+      <div id="content-dashboard" class="space-y-6">
+        <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="flex items-center gap-5">
+            <div class="relative w-28 h-28 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path class="text-slate-100" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="kpi-circle-bar" class="text-[#DC2626]" stroke-dasharray="41, 100" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <div class="absolute text-center">
+                <span class="text-2xl font-black text-slate-800" id="overall-score">41%</span>
+              </div>
+            </div>
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Estatus Actual</span>
+              <h3 class="text-xl font-extrabold text-[#DC2626]" id="overall-status-text">ESTADO CRÍTICO</h3>
+              <p class="text-xs text-slate-500 mt-1">Meta Ponderada Global: <strong class="text-slate-700" id="overall-target-label">92%</strong></p>
+            </div>
+          </div>
+
+          <div class="w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 text-xs space-y-2">
+            <div class="flex justify-between md:justify-start gap-4">
+              <span class="text-slate-500">Programa SST:</span>
+              <span class="font-bold text-[#16A34A]" id="badge-prog">97% 🟢</span>
+            </div>
+            <div class="flex justify-between md:justify-start gap-4">
+              <span class="text-slate-500">Matriz de Acciones:</span>
+              <span class="font-bold text-[#D97706]" id="badge-matriz">51% 🟡</span>
+            </div>
+            <div class="flex justify-between md:justify-start gap-4">
+              <span class="text-slate-500">Índice de Accidentabilidad:</span>
+              <span class="font-bold text-[#DC2626]" id="badge-seg">3% 🔴</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 space-y-4">
+          <h3 class="text-sm font-bold text-[#0F172A] border-b border-slate-100 pb-2">Desglose de Ponderación y Metas Independientes</h3>
+          
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span>Programa SST (Peso 30%)</span>
+              <span class="text-[#16A34A]" id="bar-prog-text">97% / Meta 85%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+              <div id="bar-prog-fill" class="bg-[#16A34A] h-3 rounded-full card-transition" style="width: 97%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span>Matriz de Acciones (Peso 20%)</span>
+              <span class="text-[#D97706]" id="bar-matriz-text">51% / Meta 85%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+              <div id="bar-matriz-fill" class="bg-[#D97706] h-3 rounded-full card-transition" style="width: 51%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span>Índice de Accidentabilidad (Peso 50%)</span>
+              <span class="text-[#DC2626]" id="bar-seg-text">3% / Meta 100%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+              <div id="bar-seg-fill" class="bg-[#DC2626] h-3 rounded-full card-transition" style="width: 3%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA AVANCE POR RESPONSABLE (CON FILTROS DE ROL) -->
+      <div id="content-responsable" class="bg-white rounded-xl shadow-md border border-slate-200 p-6 hidden space-y-6">
+        <div class="border-b border-slate-100 pb-3 flex flex-col md:flex-row justify-between md:items-center gap-2">
+          <div>
+            <h2 class="text-lg font-extrabold text-[#0F172A]">👤 Avance Mensual por Responsables</h2>
+            <p class="text-xs text-slate-500">Seguimiento individual de Supervisores y Coordinadores.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Botones de Filtro por Rol -->
+            <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-bold">
+              <button id="filter-role-all" onclick="filtrarPorRol('TODOS')" class="px-2.5 py-1 rounded-md bg-[#0F172A] text-white card-transition">Todos</button>
+              <button id="filter-role-sup" onclick="filtrarPorRol('Supervisor')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 card-transition">Supervisores</button>
+              <button id="filter-role-coord" onclick="filtrarPorRol('Coordinador')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 card-transition">Coordinadores</button>
+            </div>
+
+            <button onclick="toggleResponsableModal(true)" class="text-xs font-bold text-white bg-[#0284C7] hover:bg-sky-700 py-2 px-3 rounded-lg shadow-sm card-transition self-start md:self-auto">
+              ➕ Agregar / Editar
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h3 class="text-xs font-bold text-slate-700 mb-3">Gráfico Comparativo de Avance vs Metas</h3>
+          <div class="h-64 w-full relative">
+            <canvas id="responsablesChart"></canvas>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <th class="p-2.5">Responsable</th>
+                <th class="p-2.5">Empresa</th>
+                <th class="p-2.5">Rol</th>
+                <th class="p-2.5">Mes</th>
+                <th class="p-2.5">Prog. SST / Meta</th>
+                <th class="p-2.5">Matriz Acc. / Meta</th>
+                <th class="p-2.5">Índice Acc. / Meta</th>
+                <th class="p-2.5 text-right">Prom. Ponderado</th>
+                <th class="p-2.5 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="table-responsables-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VISTA 2: TRAZABILIDAD Y EVOLUCIÓN HISTÓRICA -->
+      <div id="content-trazabilidad" class="bg-white rounded-xl shadow-md border border-slate-200 p-6 hidden space-y-6">
+        <div class="border-b border-slate-100 pb-3">
+          <h2 class="text-lg font-extrabold text-[#0F172A]">📈 Trazabilidad y Evolución de Desempeño SST</h2>
+          <p class="text-xs text-slate-500">Seguimiento histórico mensual del cumplimiento global y metas independientes.</p>
+        </div>
+
+        <div class="h-80 w-full relative pt-2">
+          <canvas id="historyChart"></canvas>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <th class="p-2.5">Mes</th>
+                <th class="p-2.5">Prog. SST</th>
+                <th class="p-2.5">Matriz Acc.</th>
+                <th class="p-2.5">Índice Acc.</th>
+                <th class="p-2.5 text-right">Global</th>
+              </tr>
+            </thead>
+            <tbody id="table-history-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VISTA 3: PLAN DE ACCIÓN Y ROLES -->
+      <div id="content-plan" class="bg-white rounded-xl shadow-md border border-slate-200 p-6 hidden space-y-6">
+        <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-extrabold text-[#0F172A]">🎯 Plan de Acción y Responsabilidades SST</h2>
+            <p class="text-xs text-slate-500">Acciones asignadas para revertir o mantener los resultados del periodo.</p>
+          </div>
+          <button onclick="copyActionPlan()" class="text-xs font-bold text-white bg-[#0284C7] hover:bg-sky-700 py-2 px-3 rounded-lg shadow-sm card-transition">
+            📋 Copiar Plan
+          </button>
+        </div>
+
+        <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-200 space-y-3">
+          <div class="flex items-center gap-2 text-amber-900 font-bold text-sm">
+            <span class="p-1 bg-amber-200 rounded text-amber-900">👷</span>
+            <h3>Supervisores (Responsables Operativos)</h3>
+          </div>
+          <ul class="space-y-2 text-xs text-slate-700" id="list-plan-supervisores"></ul>
+        </div>
+
+        <div class="bg-sky-50/60 rounded-xl p-4 border border-sky-200 space-y-3">
+          <div class="flex items-center gap-2 text-sky-900 font-bold text-sm">
+            <span class="p-1 bg-sky-200 rounded text-sky-900">📋</span>
+            <h3>Coordinadores (Líderes de Control y Auditoría)</h3>
+          </div>
+          <ul class="space-y-2 text-xs text-slate-700" id="list-plan-coordinadores"></ul>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL DE EDICIÓN Y CONFIGURACIÓN -->
+  <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="bg-[#0F172A] text-white p-4 px-6 flex justify-between items-center">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <span>⚙️</span> Configurar Datos, Metas y Conexión Google Drive
+        </h3>
+        <button onclick="toggleModal(false)" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-700">
+        <div class="bg-sky-50 border border-sky-200 p-3 rounded-xl space-y-2">
+          <h4 class="font-bold text-sky-900 text-xs flex items-center gap-1">🌐 URL de Google Apps Script (Drive Persistence)</h4>
+          <input type="text" id="input-script-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-2 border border-sky-300 rounded-lg outline-none font-mono text-[11px] bg-white">
+        </div>
+
+        <div class="border-b pb-4">
+          <h4 class="font-bold text-slate-900 text-sm mb-3 text-[#0284C7]">1. Datos del Periodo y Metas Independientes</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block font-semibold mb-1">Nombre del Periodo:</label>
+              <input type="text" id="input-periodo" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div>
+              <label class="block font-semibold mb-1 text-[#16A34A]">Meta Prog. SST (%):</label>
+              <input type="number" id="input-meta-prog" min="0" max="100" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1 text-[#D97706]">Meta Matriz Acc. (%):</label>
+              <input type="number" id="input-meta-matriz" min="0" max="100" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1 text-[#DC2626]">Meta Índice Acc. (%):</label>
+              <input type="number" id="input-meta-seg" min="0" max="100" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+          </div>
+        </div>
+
+        <div class="border-b pb-4">
+          <h4 class="font-bold text-slate-900 text-sm mb-3 text-[#0284C7]">2. Porcentajes Reales del Periodo Actual</h4>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold mb-1">Programa SST (%):</label>
+              <input type="number" id="input-prog" min="0" max="100" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1">Matriz Acciones (%):</label>
+              <input type="number" id="input-matriz" min="0" max="100" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1">Índice de accidentabilidad (%):</label>
+              <input type="number" id="input-seg" min="0" max="100" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0284C7] outline-none">
+            </div>
+          </div>
+        </div>
+
+        <div class="border-b pb-4">
+          <h4 class="font-bold text-slate-900 text-sm mb-3 text-[#0284C7]">3. Histórico de Meses (Trazabilidad)</h4>
+          <div class="space-y-2">
+            <div>
+              <label class="block font-semibold mb-1">Etiquetas de Meses (separados por coma):</label>
+              <input type="text" id="input-hist-labels" class="w-full p-2 border border-slate-300 rounded-lg outline-none font-mono text-[11px]">
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block font-semibold mb-1">Prog. SST (%):</label>
+                <input type="text" id="input-hist-prog" class="w-full p-2 border border-slate-300 rounded-lg outline-none font-mono text-[11px]">
+              </div>
+              <div>
+                <label class="block font-semibold mb-1">Matriz Acc. (%):</label>
+                <input type="text" id="input-hist-matriz" class="w-full p-2 border border-slate-300 rounded-lg outline-none font-mono text-[11px]">
+              </div>
+              <div>
+                <label class="block font-semibold mb-1">Índice Acc. (%):</label>
+                <input type="text" id="input-hist-seg" class="w-full p-2 border border-slate-300 rounded-lg outline-none font-mono text-[11px]">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-b pb-4 space-y-3">
+          <h4 class="font-bold text-slate-900 text-sm text-[#0284C7]">4. Diagnósticos de Mantenimiento</h4>
+          <div>
+            <label class="block font-semibold mb-1">Causa Raíz Principal:</label>
+            <input type="text" id="input-diag-causa" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Foco Físico / Observaciones:</label>
+            <input type="text" id="input-diag-foco" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-slate-900 text-sm mb-3 text-[#0284C7]">5. Planes de Acción</h4>
+          <div class="space-y-3">
+            <div>
+              <label class="block font-semibold mb-1">Acciones para Supervisores:</label>
+              <textarea id="input-plan-sup" rows="3" class="w-full p-2 border border-slate-300 rounded-lg outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block font-semibold mb-1">Acciones para Coordinadores:</label>
+              <textarea id="input-plan-coord" rows="2" class="w-full p-2 border border-slate-300 rounded-lg outline-none"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 px-6 border-t border-slate-200 flex justify-between items-center">
+        <button onclick="restaurarPorDefecto()" class="text-xs font-semibold text-slate-500 hover:text-slate-800 underline">Restablecer Plantilla Original</button>
+        <div class="flex gap-2">
+          <button onclick="toggleModal(false)" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg card-transition">Cancelar</button>
+          <button onclick="guardarDatosEditados()" class="px-4 py-2 bg-[#0284C7] hover:bg-sky-700 text-white font-bold rounded-lg shadow-md card-transition">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL RESPONSABLES -->
+  <div id="responsable-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="bg-[#0F172A] text-white p-4 px-6 flex justify-between items-center">
+        <h3 class="font-bold text-base flex items-center gap-2"><span>👤</span> Configurar Responsable</h3>
+        <button onclick="toggleResponsableModal(false)" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
+        <input type="hidden" id="resp-edit-index" value="-1">
+        <div>
+          <label class="block font-semibold mb-1">Nombre Completo:</label>
+          <input type="text" id="resp-nombre" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold mb-1">Empresa:</label>
+            <select id="resp-empresa" class="w-full p-2 border border-slate-300 rounded-lg outline-none bg-white">
+              <option value="San Fernando">San Fernando</option>
+              <option value="Chimú Agropecuaria">Chimú Agropecuaria</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Rol / Cargo:</label>
+            <select id="resp-rol" class="w-full p-2 border border-slate-300 rounded-lg outline-none bg-white">
+              <option value="Supervisor">Supervisor</option>
+              <option value="Coordinador">Coordinador</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold mb-1">Mes Evaluado:</label>
+            <input type="text" id="resp-mes" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+          </div>
+        </div>
+
+        <div class="border-t pt-3">
+          <h4 class="font-bold text-slate-800 mb-2">Avance y Metas Individuales:</h4>
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 mb-2">
+            <div>
+              <label class="block font-semibold mb-1 text-[#16A34A]">Prog. SST (%):</label>
+              <input type="number" id="resp-prog" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1 text-[#16A34A]">Meta Prog. (%):</label>
+              <input type="number" id="resp-meta-prog" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 mb-2">
+            <div>
+              <label class="block font-semibold mb-1 text-[#D97706]">Matriz Acc. (%):</label>
+              <input type="number" id="resp-matriz" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1 text-[#D97706]">Meta Matriz (%):</label>
+              <input type="number" id="resp-meta-matriz" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <div>
+              <label class="block font-semibold mb-1 text-[#DC2626]">Índice Acc. (%):</label>
+              <input type="number" id="resp-seg" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold mb-1 text-[#DC2626]">Meta Índice (%):</label>
+              <input type="number" id="resp-meta-seg" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 px-6 border-t border-slate-200 flex justify-end gap-2">
+        <button onclick="toggleResponsableModal(false)" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg">Cancelar</button>
+        <button onclick="guardarResponsable()" class="px-4 py-2 bg-[#0284C7] text-white font-bold rounded-lg">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-message" class="fixed bottom-6 right-6 bg-[#0F172A] text-white py-3 px-5 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50 text-sm">
+    <span class="text-lg">✓</span>
+    <span id="toast-text">Notificación</span>
+  </div>
+
+  <footer class="bg-[#0F172A] text-white py-6 px-4 text-center text-xs mt-12 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400">
+      <p>&copy; 2026 Compañía San Fernando. Área de SST - Mantenimiento Pecuario.</p>
+    </div>
+  </footer>
+
+  <script>
+    Chart.register(ChartDataLabels);
+
+    let myChart = null;
+    let respChart = null;
+    let currentRoleFilter = 'TODOS';
+    let currentCompanyFilter = 'San Fernando';
+
+    const DEFAULT_DATA = {
+      scriptUrl: "",
+      periodo: "Julio 2026 (Semana 30)",
+      metaProg: 85,
+      metaMatriz: 85,
+      metaSeg: 100,
+      progBase: 97,
+      matrizBase: 42,
+      segBase: 3,
+      historico: {
+        meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul"],
+        prog: [100, 100, 100, 100, 100, 100, 97],
+        matriz: [60, 65, 70, 15, 29, 59, 42],
+        seg: [100, 100, 100, 8, 2, 3, 3]
+      },
+      responsables: [
+        { nombre: "Carlos Mendoza", empresa: "San Fernando", rol: "Supervisor", mes: "Julio", prog: 95, metaProg: 85, matriz: 60, metaMatriz: 85, seg: 0, metaSeg: 100 },
+        { nombre: "Roberto Gómez", empresa: "San Fernando", rol: "Supervisor", mes: "Julio", prog: 100, metaProg: 85, matriz: 30, metaMatriz: 85, seg: 10, metaSeg: 100 },
+        { nombre: "Ana Torres", empresa: "San Fernando", rol: "Coordinador", mes: "Julio", prog: 98, metaProg: 90, matriz: 80, metaMatriz: 85, seg: 80, metaSeg: 100 },
+        { nombre: "Luis Paredes", empresa: "Chimú Agropecuaria", rol: "Supervisor", mes: "Julio", prog: 90, metaProg: 85, matriz: 50, metaMatriz: 85, seg: 10, metaSeg: 100 }
+      ],
+      diagCausa: "Indice de accidentabilidad crítico en relación con las actividades técnicas de mantenimiento, falta de control y supervisión por parte del supervisor de mantenimiento asi como la aplicación de las buenas practicas de SST.",
+      diagFoco: "Existen 11 acciones correctivas pendientes de levantar, concentradas mayoritariamente en los planteles del GP C14 y GP C15.",
+      planSupervisores: [
+        "Supervisar obligatoriamente las actividades que realicen el personal técnico (Análisis de Trabajo Seguro) antes de iniciar cualquier actividad de Mantenimiento.",
+        "Regularizar de forma diaria el reporte de Horas Hombre (H.H.) de Servicios Externos.",
+        "Levantar las 11 acciones pendientes en Planteles (Foco urgente en Granjas GP C14 y C15)."
+      ],
+      planCoordinadores: [
+        "Fiscalizar en campo el cumplimiento del programa y auditar in situ el registro preventivo del ATS.",
+        "Desplegar medidas correctivas e intervenciones inmediatas con los supervisores que presenten retrasos."
+      ]
+    };
+
+    let appData = { ...DEFAULT_DATA };
+
+    window.onload = async function() {
+      cargarDatosLocales();
+      if (appData.scriptUrl) {
+        await cargarDesdeGoogleDrive();
+      }
+      aplicarDatosEnPantalla();
+    };
+
+    function cargarDatosLocales() {
+      const datosGuardados = localStorage.getItem('san_fernando_sst_data');
+      if (datosGuardados) {
+        try {
+          appData = { ...DEFAULT_DATA, ...JSON.parse(datosGuardados) };
+        } catch (e) {
+          appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+      } else {
+        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+    }
+
+    async function guardarEnGoogleDrive() {
+      localStorage.setItem('san_fernando_sst_data', JSON.stringify(appData));
+      if (!appData.scriptUrl) {
+        showToast('💾 Guardado localmente.');
+        return;
+      }
+      const indicator = document.getElementById('drive-sync-indicator');
+      if (indicator) indicator.innerText = "⏳ Sincronizando...";
+
+      try {
+        await fetch(appData.scriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(appData)
+        });
+        if (indicator) indicator.innerText = "☁️ Guardado en Drive";
+        showToast('☁️ Datos actualizados en Google Drive.');
+      } catch (err) {
+        if (indicator) indicator.innerText = "⚠️ Error de Sync";
+        showToast('⚠️ Error al sincronizar.');
+      }
+    }
+
+    async function cargarDesdeGoogleDrive() {
+      if (!appData.scriptUrl) return;
+      const indicator = document.getElementById('drive-sync-indicator');
+      if (indicator) indicator.innerText = "⏳ Cargando de Drive...";
+
+      try {
+        const response = await fetch(appData.scriptUrl);
+        const remoteData = await response.json();
+        if (remoteData && typeof remoteData === 'object') {
+          appData = { ...DEFAULT_DATA, ...remoteData };
+          localStorage.setItem('san_fernando_sst_data', JSON.stringify(appData));
+          if (indicator) indicator.innerText = "☁️ Sincronizado";
+        }
+      } catch (err) {
+        if (indicator) indicator.innerText = "📱 Usando Datos Locales";
+      }
+    }
+
+    function aplicarDatosEnPantalla() {
+      document.getElementById('header-periodo').innerText = appData.periodo;
+      document.getElementById('header-meta').innerText = `${appData.metaProg}% / ${appData.metaMatriz}% / ${appData.metaSeg}%`;
+
+      document.getElementById('slider-prog').value = appData.progBase;
+      document.getElementById('slider-matriz').value = appData.matrizBase;
+      document.getElementById('slider-seg').value = appData.segBase;
+
+      document.getElementById('lbl-base-prog').innerText = appData.progBase + '%';
+      document.getElementById('lbl-base-matriz').innerText = appData.matrizBase + '%';
+      document.getElementById('lbl-base-seg').innerText = appData.segBase + '%';
+
+      document.getElementById('lbl-meta-prog').innerText = appData.metaProg + '%';
+      document.getElementById('lbl-meta-matriz').innerText = appData.metaMatriz + '%';
+      document.getElementById('lbl-meta-seg').innerText = appData.metaSeg + '%';
+
+      document.getElementById('diag-causa').innerText = appData.diagCausa;
+      document.getElementById('diag-foco').innerText = appData.diagFoco;
+
+      document.getElementById('list-plan-supervisores').innerHTML = appData.planSupervisores.map((item, idx) => `
+        <li class="flex items-start gap-2 bg-white p-2.5 rounded-lg border border-amber-100 shadow-sm">
+          <span class="font-bold text-[#DC2626]">${idx + 1}.</span>
+          <span>${item}</span>
+        </li>
+      `).join('');
+
+      document.getElementById('list-plan-coordinadores').innerHTML = appData.planCoordinadores.map((item, idx) => `
+        <li class="flex items-start gap-2 bg-white p-2.5 rounded-lg border border-sky-100 shadow-sm">
+          <span class="font-bold text-[#0284C7]">${idx + 1}.</span>
+          <span>${item}</span>
+        </li>
+      `).join('');
+
+      renderResponsablesTable();
+      renderResponsablesChart();
+      renderHistoryTable();
+      renderChart();
+      recalculateMetrics();
+    }
+
+    function getFilteredResponsables() {
+      if (!appData.responsables) return [];
+      return appData.responsables.filter(r => {
+        const matchesRole = currentRoleFilter === 'TODOS' || r.rol === currentRoleFilter;
+        const matchesCompany = currentCompanyFilter === 'TODAS' || r.empresa === currentCompanyFilter;
+        return matchesRole && matchesCompany;
+      });
+    }
+
+    function renderResponsablesTable() {
+      const tbody = document.getElementById('table-responsables-body');
+      const filtered = getFilteredResponsables();
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-400">No hay registros para este filtro.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((r) => {
+        const realIndex = appData.responsables.indexOf(r);
+        const mProg = r.metaProg || appData.metaProg;
+        const mMatriz = r.metaMatriz || appData.metaMatriz;
+        const mSeg = r.metaSeg || appData.metaSeg;
+
+        const globalVal = Math.round((r.prog * 0.3) + (r.matriz * 0.2) + (r.seg * 0.5));
+        const badgeColor = globalVal >= 85 ? 'text-[#16A34A]' : (globalVal >= 70 ? 'text-[#D97706]' : 'text-[#DC2626]');
+        const rolBadge = r.rol === 'Supervisor' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800';
+
+        html += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-bold">${r.nombre}</td>
+            <td class="p-2.5 text-slate-600 font-medium">${r.empresa || 'San Fernando'}</td>
+            <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${rolBadge}">${r.rol}</span></td>
+            <td class="p-2.5 text-slate-600">${r.mes}</td>
+            <td class="p-2.5 text-slate-600">${r.prog}% / <span class="font-semibold text-slate-400">${mProg}%</span></td>
+            <td class="p-2.5 text-slate-600">${r.matriz}% / <span class="font-semibold text-slate-400">${mMatriz}%</span></td>
+            <td class="p-2.5 text-slate-600">${r.seg}% / <span class="font-semibold text-slate-400">${mSeg}%</span></td>
+            <td class="p-2.5 text-right font-black ${badgeColor}">${globalVal}%</td>
+            <td class="p-2.5 text-center space-x-1">
+              <button onclick="editarResponsable(${realIndex})" class="text-xs text-sky-600">✏️</button>
+              <button onclick="eliminarResponsable(${realIndex})" class="text-xs text-red-400">✕</button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderResponsablesChart() {
+      const ctx = document.getElementById('responsablesChart').getContext('2d');
+      const filtered = getFilteredResponsables();
+
+      if (filtered.length === 0) {
+        if (respChart) respChart.destroy();
+        return;
+      }
+
+      const labels = filtered.map(r => `${r.nombre} (${r.rol})`);
+      const progData = filtered.map(r => r.prog);
+      const matrizData = filtered.map(r => r.matriz);
+      const segData = filtered.map(r => r.seg);
+      const targetData = filtered.map(r => {
+        const mP = r.metaProg || appData.metaProg;
+        const mM = r.metaMatriz || appData.metaMatriz;
+        const mS = r.metaSeg || appData.metaSeg;
+        return Math.round((mP * 0.3) + (mM * 0.2) + (mS * 0.5));
+      });
+
+      if (respChart) respChart.destroy();
+
+      respChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Prog. SST', data: progData, backgroundColor: '#16A34A' },
+            { label: 'Matriz Acc.', data: matrizData, backgroundColor: '#D97706' },
+            { label: 'Índice Acc.', data: segData, backgroundColor: '#DC2626' },
+            { label: 'Meta Individual', data: targetData, type: 'line', borderColor: '#0284C7', borderWidth: 2, fill: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 105, ticks: { callback: v => v + "%" } } },
+          plugins: {
+            datalabels: { display: false },
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    function filtrarPorRol(rol) {
+      currentRoleFilter = rol;
+      
+      const btnAll = document.getElementById('filter-role-all');
+      const btnSup = document.getElementById('filter-role-sup');
+      const btnCoord = document.getElementById('filter-role-coord');
+
+      const activeClass = "px-2.5 py-1 rounded-md bg-[#0F172A] text-white card-transition";
+      const inactiveClass = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 card-transition";
+
+      btnAll.className = rol === 'TODOS' ? activeClass : inactiveClass;
+      btnSup.className = rol === 'Supervisor' ? activeClass : inactiveClass;
+      btnCoord.className = rol === 'Coordinador' ? activeClass : inactiveClass;
+
+      renderResponsablesTable();
+      renderResponsablesChart();
+    }
+
+    function filtrarPorEmpresa(empresa) {
+      currentCompanyFilter = empresa;
+      renderResponsablesTable();
+      renderResponsablesChart();
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('table-history-body');
+      const h = appData.historico;
+      let html = '';
+
+      const targetGlobal = Math.round((appData.metaProg * 0.3) + (appData.metaMatriz * 0.2) + (appData.metaSeg * 0.5));
+
+      for (let i = 0; i < h.meses.length; i++) {
+        const globalVal = Math.round((h.prog[i] * 0.3) + (h.matriz[i] * 0.2) + (h.seg[i] * 0.5));
+        const badgeColor = globalVal >= targetGlobal ? 'text-[#16A34A]' : (globalVal >= targetGlobal - 15 ? 'text-[#D97706]' : 'text-[#DC2626]');
+        
+        html += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-bold">${h.meses[i]}</td>
+            <td class="p-2.5 text-slate-600">${h.prog[i]}%</td>
+            <td class="p-2.5 text-slate-600">${h.matriz[i]}%</td>
+            <td class="p-2.5 text-slate-600">${h.seg[i]}%</td>
+            <td class="p-2.5 text-right font-black ${badgeColor}">${globalVal}%</td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = html;
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('historyChart').getContext('2d');
+      const h = appData.historico;
+
+      const globalData = h.meses.map((_, i) => Math.round((h.prog[i] * 0.3) + (h.matriz[i] * 0.2) + (h.seg[i] * 0.5)));
+      const targetGlobal = Math.round((appData.metaProg * 0.3) + (appData.metaMatriz * 0.2) + (appData.metaSeg * 0.5));
+      const metaLineData = h.meses.map(() => targetGlobal);
+
+      if (myChart) myChart.destroy();
+
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: h.meses,
+          datasets: [
+            {
+              label: 'Desempeño Global (%)',
+              data: globalData,
+              borderColor: '#0F172A',
+              backgroundColor: 'rgba(15, 23, 42, 0.06)',
+              borderWidth: 3.5,
+              pointRadius: 5,
+              pointBackgroundColor: '#0F172A',
+              pointHoverRadius: 7,
+              fill: true,
+              tension: 0.25,
+              datalabels: {
+                display: true,
+                align: 'top',
+                anchor: 'center',
+                offset: 6,
+                backgroundColor: '#0F172A',
+                borderRadius: 4,
+                color: '#FFFFFF',
+                font: { weight: 'bold', size: 10 },
+                formatter: (value) => value + '%'
+              }
+            },
+            {
+              label: `Prog. SST (Meta ${appData.metaProg}%)`,
+              data: h.prog,
+              borderColor: '#16A34A',
+              borderDash: [6, 4],
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#16A34A',
+              fill: false,
+              datalabels: { display: false }
+            },
+            {
+              label: `Matriz Acc. (Meta ${appData.metaMatriz}%)`,
+              data: h.matriz,
+              borderColor: '#D97706',
+              borderDash: [6, 4],
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#D97706',
+              fill: false,
+              datalabels: { display: false }
+            },
+            {
+              label: `Índice Acc. (Meta ${appData.metaSeg}%)`,
+              data: h.seg,
+              borderColor: '#DC2626',
+              borderDash: [5, 4],
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: '#DC2626',
+              fill: false,
+              datalabels: { display: false }
+            },
+            {
+              label: `Meta Ponderada (${targetGlobal}%)`,
+              data: metaLineData,
+              borderColor: '#0284C7',
+              borderDash: [8, 4],
+              borderWidth: 2.5,
+              pointRadius: 0,
+              fill: false,
+              datalabels: { display: false }
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 25, bottom: 10 }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 110,
+              ticks: {
+                stepSize: 20,
+                callback: v => v <= 100 ? v + "%" : ""
+              },
+              grid: { color: '#E2E8F0' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { size: 10, weight: 'bold' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.dataset.label}: ${context.parsed.y}%`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function recalculateMetrics() {
+      const prog = parseFloat(document.getElementById('slider-prog').value);
+      const matriz = parseFloat(document.getElementById('slider-matriz').value);
+      const seg = parseFloat(document.getElementById('slider-seg').value);
+
+      document.getElementById('val-prog').innerText = `${prog}%`;
+      document.getElementById('val-matriz').innerText = `${matriz}%`;
+      document.getElementById('val-seg').innerText = `${seg}%`;
+
+      const overall = Math.round((prog * 0.3) + (matriz * 0.2) + (seg * 0.5));
+      const targetGlobal = Math.round((appData.metaProg * 0.3) + (appData.metaMatriz * 0.2) + (appData.metaSeg * 0.5));
+
+      document.getElementById('overall-score').innerText = `${overall}%`;
+      document.getElementById('kpi-circle-bar').setAttribute('stroke-dasharray', `${overall}, 100`);
+
+      document.getElementById('bar-prog-fill').style.width = `${prog}%`;
+      document.getElementById('bar-prog-text').innerText = `${prog}% / Meta ${appData.metaProg}%`;
+
+      document.getElementById('bar-matriz-fill').style.width = `${matriz}%`;
+      document.getElementById('bar-matriz-text').innerText = `${matriz}% / Meta ${appData.metaMatriz}%`;
+
+      document.getElementById('bar-seg-fill').style.width = `${seg}%`;
+      document.getElementById('bar-seg-text').innerText = `${seg}% / Meta ${appData.metaSeg}%`;
+
+      document.getElementById('badge-prog').innerText = `${prog}% ${prog >= appData.metaProg ? '🟢' : '🔴'}`;
+      document.getElementById('badge-matriz').innerText = `${matriz}% ${matriz >= appData.metaMatriz ? '🟢' : '🟡'}`;
+      document.getElementById('badge-seg').innerText = `${seg}% ${seg >= appData.metaSeg ? '🟢' : '🔴'}`;
+
+      document.getElementById('overall-target-label').innerText = `${targetGlobal}%`;
+
+      const statusTag = document.getElementById('header-status-tag');
+      const statusText = document.getElementById('overall-status-text');
+      const circleBar = document.getElementById('kpi-circle-bar');
+
+      if (overall >= targetGlobal) {
+        statusTag.innerText = `${overall}% - CONFORME`;
+        statusTag.className = "font-mono text-[#16A34A] font-extrabold";
+        statusText.innerText = "ESTADO CONFORME";
+        statusText.className = "text-xl font-extrabold text-[#16A34A]";
+        circleBar.className.baseVal = "text-[#16A34A]";
+      } else if (overall >= (targetGlobal - 15)) {
+        statusTag.innerText = `${overall}% - REGULAR`;
+        statusTag.className = "font-mono text-[#D97706] font-extrabold";
+        statusText.innerText = "ESTADO OBSERVADO";
+        statusText.className = "text-xl font-extrabold text-[#D97706]";
+        circleBar.className.baseVal = "text-[#D97706]";
+      } else {
+        statusTag.innerText = `${overall}% - CRÍTICO`;
+        statusTag.className = "font-mono text-[#DC2626] font-extrabold";
+        statusText.innerText = "ESTADO CRÍTICO";
+        statusText.className = "text-xl font-extrabold text-[#DC2626]";
+        circleBar.className.baseVal = "text-[#DC2626]";
+      }
+    }
+
+    function resetSimulatedData() {
+      cargarDatosLocales();
+      aplicarDatosEnPantalla();
+      showToast('↺ Restablecido a los últimos datos guardados.');
+    }
+
+    async function guardarValoresSimulador() {
+      appData.progBase = parseFloat(document.getElementById('slider-prog').value);
+      appData.matrizBase = parseFloat(document.getElementById('slider-matriz').value);
+      appData.segBase = parseFloat(document.getElementById('slider-seg').value);
+
+      if(appData.historico.prog.length > 0) {
+        const lastIdx = appData.historico.prog.length - 1;
+        appData.historico.prog[lastIdx] = appData.progBase;
+        appData.historico.matriz[lastIdx] = appData.matrizBase;
+        appData.historico.seg[lastIdx] = appData.segBase;
+      }
+
+      await guardarEnGoogleDrive();
+      aplicarDatosEnPantalla();
+    }
+
+    function toggleModal(show) {
+      const modal = document.getElementById('edit-modal');
+      if (show) {
+        document.getElementById('input-script-url').value = appData.scriptUrl || '';
+        document.getElementById('input-periodo').value = appData.periodo;
+        document.getElementById('input-meta-prog').value = appData.metaProg;
+        document.getElementById('input-meta-matriz').value = appData.metaMatriz;
+        document.getElementById('input-meta-seg').value = appData.metaSeg;
+
+        document.getElementById('input-prog').value = appData.progBase;
+        document.getElementById('input-matriz').value = appData.matrizBase;
+        document.getElementById('input-seg').value = appData.segBase;
+
+        document.getElementById('input-hist-labels').value = appData.historico.meses.join(', ');
+        document.getElementById('input-hist-prog').value = appData.historico.prog.join(', ');
+        document.getElementById('input-hist-matriz').value = appData.historico.matriz.join(', ');
+        document.getElementById('input-hist-seg').value = appData.historico.seg.join(', ');
+
+        document.getElementById('input-diag-causa').value = appData.diagCausa;
+        document.getElementById('input-diag-foco').value = appData.diagFoco;
+        document.getElementById('input-plan-sup').value = appData.planSupervisores.join('\n');
+        document.getElementById('input-plan-coord').value = appData.planCoordinadores.join('\n');
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    async function guardarDatosEditados() {
+      appData.scriptUrl = document.getElementById('input-script-url').value.trim();
+      appData.periodo = document.getElementById('input-periodo').value || "Periodo N/A";
+      appData.metaProg = parseFloat(document.getElementById('input-meta-prog').value) || 85;
+      appData.metaMatriz = parseFloat(document.getElementById('input-meta-matriz').value) || 85;
+      appData.metaSeg = parseFloat(document.getElementById('input-meta-seg').value) || 100;
+
+      appData.progBase = parseFloat(document.getElementById('input-prog').value) || 0;
+      appData.matrizBase = parseFloat(document.getElementById('input-matriz').value) || 0;
+      appData.segBase = parseFloat(document.getElementById('input-seg').value) || 0;
+
+      appData.historico.meses = document.getElementById('input-hist-labels').value.split(',').map(s => s.trim());
+      appData.historico.prog = document.getElementById('input-hist-prog').value.split(',').map(s => parseFloat(s.trim()) || 0);
+      appData.historico.matriz = document.getElementById('input-hist-matriz').value.split(',').map(s => parseFloat(s.trim()) || 0);
+      appData.historico.seg = document.getElementById('input-hist-seg').value.split(',').map(s => parseFloat(s.trim()) || 0);
+
+      appData.diagCausa = document.getElementById('input-diag-causa').value;
+      appData.diagFoco = document.getElementById('input-diag-foco').value;
+
+      appData.planSupervisores = document.getElementById('input-plan-sup').value.split('\n').filter(line => line.trim() !== '');
+      appData.planCoordinadores = document.getElementById('input-plan-coord').value.split('\n').filter(line => line.trim() !== '');
+
+      await guardarEnGoogleDrive();
+      aplicarDatosEnPantalla();
+      toggleModal(false);
+    }
+
+    function toggleResponsableModal(show) {
+      const modal = document.getElementById('responsable-modal');
+      if (show) {
+        document.getElementById('resp-edit-index').value = "-1";
+        document.getElementById('resp-nombre').value = '';
+        document.getElementById('resp-empresa').value = 'San Fernando';
+        document.getElementById('resp-rol').value = 'Supervisor';
+        document.getElementById('resp-mes').value = appData.periodo.split(' ')[0] || 'Julio';
+        
+        document.getElementById('resp-prog').value = 85;
+        document.getElementById('resp-meta-prog').value = appData.metaProg;
+        document.getElementById('resp-matriz').value = 85;
+        document.getElementById('resp-meta-matriz').value = appData.metaMatriz;
+        document.getElementById('resp-seg').value = 100;
+        document.getElementById('resp-meta-seg').value = appData.metaSeg;
+
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function editarResponsable(idx) {
+      const r = appData.responsables[idx];
+      if (!r) return;
+
+      document.getElementById('resp-edit-index').value = idx;
+      document.getElementById('resp-nombre').value = r.nombre;
+      document.getElementById('resp-empresa').value = r.empresa || 'San Fernando';
+      document.getElementById('resp-rol').value = r.rol;
+      document.getElementById('resp-mes').value = r.mes;
+
+      document.getElementById('resp-prog').value = r.prog;
+      document.getElementById('resp-meta-prog').value = r.metaProg || appData.metaProg;
+      document.getElementById('resp-matriz').value = r.matriz;
+      document.getElementById('resp-meta-matriz').value = r.metaMatriz || appData.metaMatriz;
+      document.getElementById('resp-seg').value = r.seg;
+      document.getElementById('resp-meta-seg').value = r.metaSeg || appData.metaSeg;
+
+      document.getElementById('responsable-modal').classList.remove('hidden');
+    }
+
+    async function guardarResponsable() {
+      const editIdx = parseInt(document.getElementById('resp-edit-index').value);
+      const nombre = document.getElementById('resp-nombre').value.trim();
+      const empresa = document.getElementById('resp-empresa').value;
+      const rol = document.getElementById('resp-rol').value;
+      const mes = document.getElementById('resp-mes').value.trim();
+
+      const prog = parseFloat(document.getElementById('resp-prog').value) || 0;
+      const metaProg = parseFloat(document.getElementById('resp-meta-prog').value) || 85;
+      const matriz = parseFloat(document.getElementById('resp-matriz').value) || 0;
+      const metaMatriz = parseFloat(document.getElementById('resp-meta-matriz').value) || 85;
+      const seg = parseFloat(document.getElementById('resp-seg').value) || 0;
+      const metaSeg = parseFloat(document.getElementById('resp-meta-seg').value) || 100;
+
+      if (!nombre) {
+        alert('Ingresa el nombre del responsable.');
+        return;
+      }
+
+      const item = { nombre, empresa, rol, mes, prog, metaProg, matriz, metaMatriz, seg, metaSeg };
+
+      if (!appData.responsables) appData.responsables = [];
+
+      if (editIdx >= 0) {
+        appData.responsables[editIdx] = item;
+      } else {
+        appData.responsables.push(item);
+      }
+
+      await guardarEnGoogleDrive();
+      aplicarDatosEnPantalla();
+      toggleResponsableModal(false);
+    }
+
+    async function eliminarResponsable(idx) {
+      if (confirm('¿Deseas eliminar este registro de responsable?')) {
+        appData.responsables.splice(idx, 1);
+        await guardarEnGoogleDrive();
+        aplicarDatosEnPantalla();
+      }
+    }
+
+    async function restaurarPorDefecto() {
+      if (confirm('¿Deseas restablecer todos los datos a la plantilla original de fábrica?')) {
+        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        localStorage.removeItem('san_fernando_sst_data');
+        await guardarEnGoogleDrive();
+        aplicarDatosEnPantalla();
+        toggleModal(false);
+      }
+    }
+
+    function switchTab(tabId) {
+      ['dashboard', 'responsable', 'trazabilidad', 'plan'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        const content = document.getElementById(`content-${t}`);
+        if (t === tabId) {
+          btn.className = "flex-1 min-w-[120px] py-2 px-3 text-xs font-bold rounded-lg bg-[#0F172A] text-white card-transition text-center shadow-inner";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "flex-1 min-w-[120px] py-2 px-3 text-xs font-semibold text-slate-600 rounded-lg hover:bg-slate-50 card-transition text-center";
+          content.classList.add('hidden');
+        }
+      });
+    }
+
+    function copyActionPlan() {
+      let text = `====================================================\n`;
+      text += `PLAN DE ACCIÓN SST - COMPAÑÍA SAN FERNANDO\n`;
+      text += `PERIODO: ${appData.periodo.toUpperCase()}\n`;
+      text += `====================================================\n\n`;
+      text += `👷 SUPERVISORES (EJECUTORES OPERATIVOS):\n`;
+      appData.planSupervisores.forEach((item, i) => text += `${i + 1}. ${item}\n`);
+      text += `\n📋 COORDINADORES (LÍDERES DE CONTROL):\n`;
+      appData.planCoordinadores.forEach((item, i) => text += `${i + 1}. ${item}\n`);
+
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
+      showToast('✓ Plan de acción copiado.');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast-message');
+      document.getElementById('toast-text').innerText = message;
+      toast.className = "fixed bottom-6 right-6 bg-[#0F172A] text-white py-3 px-5 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-0 opacity-100 transition-all duration-300 pointer-events-auto z-50 text-sm";
+      setTimeout(() => {
+        toast.className = "fixed bottom-6 right-6 bg-[#0F172A] text-white py-3 px-5 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50 text-sm";
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
